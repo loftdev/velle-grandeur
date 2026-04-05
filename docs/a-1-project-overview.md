@@ -37,3 +37,6 @@ Not included:
 - Multi-tenant platform features
 - Email notification workflows
 - Marketplace-style advanced search/ranking
+
+Future direction:
+- Multi-tenant roadmap is documented in `docs/a-4-multi-tenant-roadmap.md`
