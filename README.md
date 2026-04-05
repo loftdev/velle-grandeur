@@ -4,6 +4,7 @@ VelleGrandeur is a single-client real estate website + admin dashboard built wit
 
 Detailed project documentation:
 - `docs/README.md` (numbered documentation flow)
+- `docs/a-3-technology-stack.md` (dedicated stack reference)
 
 ## Stack
 
