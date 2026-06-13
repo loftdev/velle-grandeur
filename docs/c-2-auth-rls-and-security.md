@@ -38,3 +38,12 @@
 
 - Public inquiry endpoint uses service-role client for insert + rate-limit checks.
 - `SUPABASE_SERVICE_ROLE_KEY` must remain server-only.
+
+## Supabase Server Cookie Handling
+
+- The request proxy refreshes authentication sessions before rendering.
+- Route Handlers and Server Actions can persist Supabase cookie updates.
+- Server Components can read cookies but cannot write them.
+- The shared server client ignores cookie-write attempts when called from a
+  Server Component, preventing the Next.js development error overlay while
+  preserving writes in supported request contexts.

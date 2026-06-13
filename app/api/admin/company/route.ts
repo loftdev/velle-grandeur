@@ -10,9 +10,15 @@ const schema = z.object({
   email: z.string().trim().email().nullable().optional(),
   address: z.string().trim().nullable().optional(),
   about: z.string().trim().nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  business_hours: z.string().trim().nullable().optional(),
   logo_path: z.string().trim().nullable().optional(),
   logo_url: z.string().trim().url().nullable().optional(),
 });
+
+const companySelect =
+  "id, name, logo_path, phone, email, address, about, latitude, longitude, business_hours";
 
 function urlToStoragePath(url: string) {
   const marker = "/storage/v1/object/public/company-assets/";
@@ -29,9 +35,15 @@ function mapCompany(data: {
   email: string | null;
   address: string | null;
   about: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  business_hours?: string | null;
 }) {
   return {
     ...data,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    business_hours: data.business_hours ?? null,
     logo_url: data.logo_path
       ? getPublicStorageUrl("company-assets", data.logo_path)
       : null,
@@ -43,16 +55,23 @@ export async function GET() {
   const guard = await requireAdmin(supabase);
   if ("response" in guard) return guard.response;
 
-  const { data, error } = await supabase
+  let result = await supabase
     .from("company")
-    .select("id, name, logo_path, phone, email, address, about")
+    .select(companySelect)
     .maybeSingle();
 
-  if (error) {
+  if (result.error?.code === "42703") {
+    result = await supabase
+      .from("company")
+      .select("id, name, logo_path, phone, email, address, about")
+      .maybeSingle();
+  }
+
+  if (result.error) {
     return jsonError("SERVER_ERROR", "Unable to load company.", 500);
   }
 
-  if (!data) {
+  if (!result.data) {
     return jsonOk({
       id: "",
       name: "",
@@ -62,10 +81,13 @@ export async function GET() {
       email: null,
       address: null,
       about: null,
+      latitude: null,
+      longitude: null,
+      business_hours: null,
     });
   }
 
-  return jsonOk(mapCompany(data));
+  return jsonOk(mapCompany(result.data));
 }
 
 export async function PATCH(request: Request) {
@@ -89,6 +111,9 @@ export async function PATCH(request: Request) {
     email: result.data.email ?? null,
     address: result.data.address ?? null,
     about: result.data.about ?? null,
+    latitude: result.data.latitude ?? null,
+    longitude: result.data.longitude ?? null,
+    business_hours: result.data.business_hours ?? null,
     logo_path: result.data.logo_path ?? logoPathFromUrl ?? null,
   };
 
@@ -105,7 +130,7 @@ export async function PATCH(request: Request) {
     const insert = await supabase
       .from("company")
       .insert(payload)
-      .select("id, name, logo_path, phone, email, address, about")
+      .select(companySelect)
       .single();
 
     if (insert.error) {
@@ -119,7 +144,7 @@ export async function PATCH(request: Request) {
     .from("company")
     .update(payload)
     .eq("id", existing.id)
-    .select("id, name, logo_path, phone, email, address, about")
+    .select(companySelect)
     .single();
 
   if (update.error) {

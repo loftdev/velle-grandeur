@@ -12,9 +12,15 @@ export async function createSupabaseServerClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Server Components cannot write cookies. The proxy refreshes the
+          // session before rendering, while Route Handlers can still persist
+          // cookie updates through this adapter.
+        }
       },
     },
   });

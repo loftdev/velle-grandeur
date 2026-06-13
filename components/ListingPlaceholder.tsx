@@ -4,7 +4,7 @@ const placeholders = [
   { category: "Commercial Space", location: "Philippines" },
 ];
 
-export default function ListingPlaceholder() {
+export default function ListingPlaceholder({ filtered = false }: { filtered?: boolean }) {
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -14,7 +14,9 @@ export default function ListingPlaceholder() {
           </p>
           <h2 className="mt-3 text-2xl font-semibold">Featured properties</h2>
           <p className="mt-1 text-sm text-neutral-600">
-            New listings are being prepared. Please check back soon.
+            {filtered
+              ? "No published listings match these filters. Try broadening your search."
+              : "New listings are being prepared. Please check back soon."}
           </p>
         </div>
         <span className="text-sm text-neutral-500">0 available</span>
