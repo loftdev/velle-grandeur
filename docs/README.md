@@ -33,12 +33,13 @@ Examples:
 4. `a-4-multi-tenant-roadmap.md`
 5. `b-1-local-setup-and-environment.md`
 6. `b-2-supabase-setup-and-deployment-notes.md`
-7. `c-1-database-schema-and-storage.md`
-8. `c-2-auth-rls-and-security.md`
-9. `d-1-public-api-reference.md`
-10. `d-2-admin-api-reference.md`
-11. `e-1-ui-routes-and-user-flows.md`
-12. `f-1-quality-checks-and-known-limitations.md`
+7. `b-3-vercel-cli-deployment-procedure.md`
+8. `c-1-database-schema-and-storage.md`
+9. `c-2-auth-rls-and-security.md`
+10. `d-1-public-api-reference.md`
+11. `d-2-admin-api-reference.md`
+12. `e-1-ui-routes-and-user-flows.md`
+13. `f-1-quality-checks-and-known-limitations.md`
 
 ## How To Add New Docs
 
