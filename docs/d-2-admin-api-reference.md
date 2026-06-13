@@ -15,7 +15,10 @@ All endpoints require:
 
 ### `PATCH /company`
 
-- Updates name/contact/about/logo path.
+- Updates name, contact details, about text, logo path, office coordinates, and
+  business hours.
+- Latitude must be between `-90` and `90`.
+- Longitude must be between `-180` and `180`.
 
 ## Listings
 

@@ -1,10 +1,20 @@
-INSERT INTO company (name, phone, email, address, about)
+INSERT INTO company (
+  name,
+  phone,
+  email,
+  address,
+  about,
+  latitude,
+  longitude
+)
 VALUES (
   'VelleGrandeur',
   '+63 900 000 0000',
   'info@vellegrandeur.com',
-  'Philippines',
-  'Luxury residences and curated investment properties across the Philippines.'
+  'Poblacion, Claveria, Misamis Oriental, Philippines',
+  'Luxury residences and curated investment properties across the Philippines.',
+  8.611484,
+  124.894067
 )
 ON CONFLICT (singleton_key) DO NOTHING;
 

@@ -15,6 +15,12 @@
 
 - Single-row pattern with `singleton_key` unique
 - Stores company profile and logo path
+- Contact and location fields:
+  - `phone`, `email`, `address`
+  - `latitude`, constrained to `-90` through `90`
+  - `longitude`, constrained to `-180` through `180`
+  - `business_hours`
+- Latitude and longitude position the office map on the public Contact page
 
 ### `admin_users`
 

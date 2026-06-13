@@ -40,3 +40,13 @@ pnpm dev
 - Admin login: `http://localhost:3000/admin/login`
 - Public APIs: `/api/public/*`
 - Admin APIs: `/api/admin/*` (auth required)
+
+## Development Admin Account
+
+The admin login form displays this test account in development builds:
+
+- Email: `test.admin@example.com`
+- Password: `password`
+
+The matching Supabase Auth user must exist and its UUID must be present in
+`admin_users`. Do not reuse these credentials for staging or production.

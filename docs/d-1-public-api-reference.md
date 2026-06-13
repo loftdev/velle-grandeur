@@ -17,6 +17,15 @@ Base path: `/api/public`
 
 Returns company profile for public website rendering.
 
+Public fields include:
+
+- `name`, `logo_url`, `phone`, `email`, `address`, `about`
+- `latitude`, `longitude`, `business_hours`
+
+The endpoint temporarily supports databases that have not yet applied the
+company location migration by returning the legacy profile fields and null
+location values.
+
 ## `GET /listings`
 
 ### Query Parameters

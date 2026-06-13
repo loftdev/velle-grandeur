@@ -12,6 +12,9 @@ type Company = {
   email: string | null;
   address: string | null;
   about: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  business_hours: string | null;
 };
 
 export default function CompanyPage() {
@@ -31,11 +34,29 @@ export default function CompanyPage() {
   }, []);
 
   const updateField = (
-    field: "name" | "phone" | "email" | "address" | "about" | "logo_path",
+    field:
+      | "name"
+      | "phone"
+      | "email"
+      | "address"
+      | "about"
+      | "business_hours"
+      | "logo_path",
     value: string,
   ) => {
     if (!company) return;
     setCompany({ ...company, [field]: value });
+  };
+
+  const updateCoordinate = (
+    field: "latitude" | "longitude",
+    value: string,
+  ) => {
+    if (!company) return;
+    setCompany({
+      ...company,
+      [field]: value === "" ? null : Number(value),
+    });
   };
 
   const handleSave = async (event: React.FormEvent) => {
@@ -54,6 +75,9 @@ export default function CompanyPage() {
         email: company.email || null,
         address: company.address || null,
         about: company.about || null,
+        latitude: company.latitude,
+        longitude: company.longitude,
+        business_hours: company.business_hours || null,
         logo_path: company.logo_path || null,
       }),
     });
@@ -149,10 +173,58 @@ export default function CompanyPage() {
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          Address
+          Full office address
           <input
             value={company.address ?? ""}
             onChange={(event) => updateField("address", event.target.value)}
+            placeholder="Street, city, province, postal code, Philippines"
+            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+          />
+        </label>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-2 text-sm font-medium">
+            Latitude
+            <input
+              value={company.latitude ?? ""}
+              onChange={(event) =>
+                updateCoordinate("latitude", event.target.value)
+              }
+              type="number"
+              min="-90"
+              max="90"
+              step="any"
+              placeholder="14.5995"
+              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            Longitude
+            <input
+              value={company.longitude ?? ""}
+              onChange={(event) =>
+                updateCoordinate("longitude", event.target.value)
+              }
+              type="number"
+              min="-180"
+              max="180"
+              step="any"
+              placeholder="120.9842"
+              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+            />
+          </label>
+        </div>
+        <p className="-mt-2 text-xs text-neutral-500">
+          Coordinates position the office map on the public Contact page.
+        </p>
+        <label className="grid gap-2 text-sm font-medium">
+          Business hours
+          <textarea
+            value={company.business_hours ?? ""}
+            onChange={(event) =>
+              updateField("business_hours", event.target.value)
+            }
+            rows={3}
+            placeholder={"Monday-Friday, 9:00 AM-5:00 PM\nViewings by appointment"}
             className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
           />
         </label>

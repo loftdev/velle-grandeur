@@ -33,6 +33,13 @@ export default function AdminLoginForm() {
 
   return (
     <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+      {process.env.NODE_ENV === "development" ? (
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--accent-soft)] p-3 text-sm">
+          <p className="font-medium">Test admin account</p>
+          <p className="mt-1">Email: test.admin@example.com</p>
+          <p>Password: password</p>
+        </div>
+      ) : null}
       <label className="grid gap-2 text-sm font-medium">
         Email
         <input
