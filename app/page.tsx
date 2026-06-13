@@ -1,5 +1,6 @@
 import ListingCard from "../components/ListingCard";
 import type { ListingSummary } from "../components/ListingCard";
+import ListingPlaceholder from "../components/ListingPlaceholder";
 import PublicFooter from "../components/PublicFooter";
 import PublicNav from "../components/PublicNav";
 import { getBaseUrl } from "../lib/api/url";
@@ -119,27 +120,33 @@ export default async function Home({
         </section>
 
         <section className="mt-14 space-y-10">
-          {categories.map((category) => {
-            const categoryItems = items.filter((listing) => listing.category === category);
-            if (!categoryItems.length) return null;
-            return (
-              <div key={category} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold">
-                    {category.replace(/_/g, " ")}
-                  </h2>
-                  <span className="text-sm text-neutral-500">
-                    {categoryItems.length} available
-                  </span>
+          {items.length === 0 ? (
+            <ListingPlaceholder />
+          ) : (
+            categories.map((category) => {
+              const categoryItems = items.filter(
+                (listing) => listing.category === category,
+              );
+              if (!categoryItems.length) return null;
+              return (
+                <div key={category} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold">
+                      {category.replace(/_/g, " ")}
+                    </h2>
+                    <span className="text-sm text-neutral-500">
+                      {categoryItems.length} available
+                    </span>
+                  </div>
+                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {categoryItems.map((listing) => (
+                      <ListingCard key={listing.id} listing={listing} />
+                    ))}
+                  </div>
                 </div>
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {categoryItems.map((listing) => (
-                    <ListingCard key={listing.id} listing={listing} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </section>
       </main>
       <PublicFooter />

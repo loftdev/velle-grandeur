@@ -8,6 +8,7 @@ export default function PublicNav() {
           VelleGrandeur
         </Link>
         <div className="flex items-center gap-6 text-sm font-medium">
+          <Link href="/">Home</Link>
           <Link href="/about">About</Link>
           <Link href="/contact">Contact</Link>
           <Link href="/admin/login" className="text-[var(--accent)]">

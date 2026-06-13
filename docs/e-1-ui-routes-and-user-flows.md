@@ -6,6 +6,10 @@
   - Landing page
   - Listing filters
   - Category sections
+  - Three non-interactive placeholder cards when no published listings match
+- Public navigation
+  - Explicit Home, About, Contact, and Admin Login links
+  - Company name also links to the home page
 - `/listings/[slugOrId]`
   - Listing details
   - Inquiry form
@@ -16,6 +20,7 @@
 
 - `/admin/login`
   - Email/password sign-in
+  - Development builds display the configured test-account note
 - `/admin`
   - Dashboard summary
 - `/admin/company`

@@ -4,6 +4,8 @@
 
 - Admin APIs/pages require authenticated user.
 - User must exist in `admin_users`.
+- Development-only credential hints are hidden from production builds.
+- Test credentials must never be reused for staging or production accounts.
 - Guard helpers:
   - `lib/api/guards.ts`
   - `lib/auth/admin.ts`
