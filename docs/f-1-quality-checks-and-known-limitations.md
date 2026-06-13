@@ -43,5 +43,5 @@ June 13, 2026:
 
 - Add integration tests for inquiry rate limiting.
 - Add API contract tests for admin/public endpoints.
-- Add deployment runbook and incident checklist docs.
+- Add an incident response and rollback checklist.
 - Add monitoring docs for Supabase quota and auth errors.
