@@ -11,7 +11,13 @@ const navItems = [
   { href: "/admin/inquiries", label: "Inquiries" },
 ];
 
-export default function AdminNav() {
+export default function AdminNav({
+  companyName,
+  logoUrl,
+}: {
+  companyName: string;
+  logoUrl: string | null;
+}) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -26,12 +32,21 @@ export default function AdminNav() {
       <div className="container py-3 sm:py-4">
         <div className="flex items-center justify-between gap-4">
           <Link href="/admin" className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] font-semibold text-white">
-              V
-            </span>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-full border border-[var(--line)] bg-white object-cover"
+              />
+            ) : (
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] font-semibold text-white">
+                {companyName.charAt(0).toUpperCase()}
+              </span>
+            )}
             <span className="min-w-0">
               <span className="block truncate text-base font-semibold sm:text-lg">
-                VelleGrandeur
+                {companyName}
               </span>
               <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
                 Admin
