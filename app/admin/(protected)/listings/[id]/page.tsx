@@ -175,24 +175,32 @@ export default function ListingDetailPage({
   };
 
   if (!listing) {
-    return <p>Loading listing...</p>;
+    return <p className="text-neutral-600">Loading listing...</p>;
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Listing details</h1>
-        <p className="mt-2 text-neutral-600">Edit listing content and images.</p>
+    <div className="space-y-10">
+      <div className="max-w-3xl">
+        <p className="badge inline-block bg-[var(--accent-soft)] text-[var(--accent)]">
+          Property management
+        </p>
+        <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">
+          Listing details
+        </h1>
+        <p className="mt-3 text-lg leading-8 text-neutral-600">
+          Edit listing content, publishing status, and property images.
+        </p>
       </div>
 
-      <form className="card grid gap-4 p-6" onSubmit={handleSave}>
-        <div className="grid gap-4 md:grid-cols-2">
+      <form className="card grid gap-7 p-6 sm:p-8" onSubmit={handleSave}>
+        <div className="grid gap-5 md:grid-cols-2">
           <label className="grid gap-2 text-sm font-medium">
             Category
             <select
+              name="category"
               value={listing.category}
               onChange={(event) => updateField("category", event.target.value)}
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -204,9 +212,10 @@ export default function ListingDetailPage({
           <label className="grid gap-2 text-sm font-medium">
             Status
             <select
+              name="status"
               value={listing.status}
               onChange={(event) => updateField("status", event.target.value)}
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
@@ -218,68 +227,85 @@ export default function ListingDetailPage({
         <label className="grid gap-2 text-sm font-medium">
           Title
           <input
+            name="title"
+            autoComplete="off"
             value={listing.title}
             onChange={(event) => updateField("title", event.target.value)}
             required
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+            className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
           />
         </label>
 
         <label className="grid gap-2 text-sm font-medium">
           Description
           <textarea
+            name="description"
             value={listing.description}
             onChange={(event) => updateField("description", event.target.value)}
             rows={4}
             required
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+            className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
           />
         </label>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2">
           <label className="grid gap-2 text-sm font-medium">
             Price (PHP)
             <input
+              name="price"
+              autoComplete="off"
               value={formatPrice(listing.price_cents)}
               onChange={(event) => updatePrice(event.target.value)}
               required
               type="number"
               min="0"
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             Province
             <input
+              name="province"
+              autoComplete="address-level1"
               value={listing.province}
               onChange={(event) => updateField("province", event.target.value)}
               required
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             City
             <input
+              name="city"
+              autoComplete="address-level2"
               value={listing.city ?? ""}
               onChange={(event) => updateField("city", event.target.value)}
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             Contact phone
             <input
+              name="contact_phone"
+              autoComplete="tel"
               value={listing.contact_phone ?? ""}
               onChange={(event) => updateField("contact_phone", event.target.value)}
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Images</h2>
-            <label className="text-sm text-[var(--accent)]">
+        <section className="space-y-5 border-t border-[var(--line)] pt-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                Gallery
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">Property images</h2>
+            </div>
+            <label className="button cursor-pointer self-start border border-[var(--line)] bg-white px-4 py-2 text-sm text-[var(--accent)]">
               <input
+                name="listing_image"
                 type="file"
                 className="hidden"
                 accept="image/*"
@@ -295,7 +321,10 @@ export default function ListingDetailPage({
               <p className="text-sm text-neutral-600">No images uploaded.</p>
             ) : (
               images.map((image) => (
-                <div key={image.storage_path} className="card overflow-hidden">
+                <div
+                  key={image.storage_path}
+                  className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={image.image_url}
@@ -313,12 +342,12 @@ export default function ListingDetailPage({
               ))
             )}
           </div>
-        </div>
+        </section>
 
         {status ? <p className="text-sm text-neutral-600">{status}</p> : null}
 
         <button
-          className="button bg-[var(--accent)] text-white"
+          className="button w-full bg-[var(--accent)] text-white sm:w-auto sm:justify-self-start"
           type="submit"
           disabled={saving}
         >

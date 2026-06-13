@@ -29,10 +29,13 @@ export default function InquiriesPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Inquiries</h1>
-        <p className="mt-2 text-neutral-600">
+    <div className="space-y-10">
+      <div className="max-w-3xl">
+        <p className="badge inline-block bg-[var(--accent-soft)] text-[var(--accent)]">
+          Client activity
+        </p>
+        <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">Inquiries</h1>
+        <p className="mt-3 text-lg leading-8 text-neutral-600">
           Review and follow up with new leads.
         </p>
       </div>
@@ -45,16 +48,19 @@ export default function InquiriesPage() {
             <p className="p-6 text-sm text-neutral-600">No inquiries yet.</p>
           ) : (
             inquiries.map((inquiry) => (
-              <div key={inquiry.id} className="flex items-center justify-between p-4">
-                <div>
-                  <p className="text-sm font-semibold">{inquiry.name}</p>
-                  <p className="text-xs text-neutral-500">
+              <div
+                key={inquiry.id}
+                className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold">{inquiry.name}</p>
+                  <p className="mt-1 text-xs text-neutral-500">
                     {new Date(inquiry.created_at).toLocaleString()} · {inquiry.status}
                   </p>
                 </div>
                 <Link
                   href={`/admin/inquiries/${inquiry.id}`}
-                  className="text-sm text-[var(--accent)]"
+                  className="button self-start border border-[var(--line)] bg-white px-4 py-2 text-sm text-[var(--accent)] sm:self-auto"
                 >
                   View
                 </Link>

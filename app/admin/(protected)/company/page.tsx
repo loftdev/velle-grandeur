@@ -134,57 +134,102 @@ export default function CompanyPage() {
   };
 
   if (!company) {
-    return <p>Loading company settings...</p>;
+    return <p className="text-neutral-600">Loading company settings...</p>;
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Company Settings</h1>
-        <p className="mt-2 text-neutral-600">
+    <div className="space-y-10">
+      <div className="max-w-3xl">
+        <p className="badge inline-block bg-[var(--accent-soft)] text-[var(--accent)]">
+          Public profile
+        </p>
+        <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">
+          Company settings
+        </h1>
+        <p className="mt-3 text-lg leading-8 text-neutral-600">
           Update the public profile details for VelleGrandeur.
         </p>
       </div>
-      <form className="card grid gap-4 p-6" onSubmit={handleSave}>
-        <label className="grid gap-2 text-sm font-medium">
-          Company name
-          <input
-            value={company.name ?? ""}
-            onChange={(event) => updateField("name", event.target.value)}
-            required
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Phone
-          <input
-            value={company.phone ?? ""}
-            onChange={(event) => updateField("phone", event.target.value)}
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Email
-          <input
-            value={company.email ?? ""}
-            onChange={(event) => updateField("email", event.target.value)}
-            type="email"
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Full office address
-          <input
-            value={company.address ?? ""}
-            onChange={(event) => updateField("address", event.target.value)}
-            placeholder="Street, city, province, postal code, Philippines"
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
-        <div className="grid gap-4 md:grid-cols-2">
+      <form
+        className="card grid max-w-4xl gap-8 p-6 sm:p-8"
+        onSubmit={handleSave}
+      >
+        <section className="grid gap-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+              Identity and contact
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Public information</h2>
+          </div>
+          <label className="grid gap-2 text-sm font-medium">
+            Company name
+            <input
+              name="name"
+              autoComplete="organization"
+              value={company.name ?? ""}
+              onChange={(event) => updateField("name", event.target.value)}
+              required
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+            />
+          </label>
+          <div className="grid gap-5 md:grid-cols-2">
+            <label className="grid gap-2 text-sm font-medium">
+              Phone
+              <input
+                name="phone"
+                autoComplete="tel"
+                value={company.phone ?? ""}
+                onChange={(event) => updateField("phone", event.target.value)}
+                className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-medium">
+              Email
+              <input
+                name="email"
+                autoComplete="email"
+                value={company.email ?? ""}
+                onChange={(event) => updateField("email", event.target.value)}
+                type="email"
+                className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+              />
+            </label>
+          </div>
+          <label className="grid gap-2 text-sm font-medium">
+            About
+            <textarea
+              name="about"
+              value={company.about ?? ""}
+              onChange={(event) => updateField("about", event.target.value)}
+              rows={5}
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+            />
+          </label>
+        </section>
+
+        <section className="grid gap-5 border-t border-[var(--line)] pt-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+              Location
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Office details</h2>
+          </div>
+          <label className="grid gap-2 text-sm font-medium">
+            Full office address
+            <input
+              name="address"
+              autoComplete="street-address"
+              value={company.address ?? ""}
+              onChange={(event) => updateField("address", event.target.value)}
+              placeholder="Street, city, province, postal code, Philippines"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+            />
+          </label>
+          <div className="grid gap-5 md:grid-cols-2">
           <label className="grid gap-2 text-sm font-medium">
             Latitude
             <input
+              name="latitude"
               value={company.latitude ?? ""}
               onChange={(event) =>
                 updateCoordinate("latitude", event.target.value)
@@ -194,12 +239,13 @@ export default function CompanyPage() {
               max="90"
               step="any"
               placeholder="14.5995"
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             Longitude
             <input
+              name="longitude"
               value={company.longitude ?? ""}
               onChange={(event) =>
                 updateCoordinate("longitude", event.target.value)
@@ -209,60 +255,71 @@ export default function CompanyPage() {
               max="180"
               step="any"
               placeholder="120.9842"
-              className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
-        </div>
-        <p className="-mt-2 text-xs text-neutral-500">
+          </div>
+          <p className="-mt-2 text-xs text-neutral-500">
           Coordinates position the office map on the public Contact page.
-        </p>
-        <label className="grid gap-2 text-sm font-medium">
-          Business hours
-          <textarea
-            value={company.business_hours ?? ""}
-            onChange={(event) =>
-              updateField("business_hours", event.target.value)
-            }
-            rows={3}
-            placeholder={"Monday-Friday, 9:00 AM-5:00 PM\nViewings by appointment"}
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          About
-          <textarea
-            value={company.about ?? ""}
-            onChange={(event) => updateField("about", event.target.value)}
-            rows={4}
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Logo path (bucket: company-assets)
-          <input
-            value={company.logo_path ?? ""}
-            onChange={(event) => updateField("logo_path", event.target.value)}
-            placeholder="company/<company_id>/logo/<uuid>.jpg"
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Upload logo
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleLogoUpload}
-            disabled={uploading}
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
-          />
-        </label>
+          </p>
+          <label className="grid gap-2 text-sm font-medium">
+            Business hours
+            <textarea
+              name="business_hours"
+              value={company.business_hours ?? ""}
+              onChange={(event) =>
+                updateField("business_hours", event.target.value)
+              }
+              rows={3}
+              placeholder={"Monday-Friday, 9:00 AM-5:00 PM\nViewings by appointment"}
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+            />
+          </label>
+        </section>
+
+        <section className="grid gap-5 border-t border-[var(--line)] pt-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+              Branding
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Company logo</h2>
+          </div>
+          <label className="grid gap-2 text-sm font-medium">
+            Logo path (bucket: company-assets)
+            <input
+              name="logo_path"
+              value={company.logo_path ?? ""}
+              onChange={(event) => updateField("logo_path", event.target.value)}
+              placeholder="company/<company_id>/logo/<uuid>.jpg"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            Upload logo
+            <input
+              name="logo"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              disabled={uploading}
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+            />
+          </label>
+        </section>
         {uploading ? <p className="text-xs text-neutral-500">Uploading logo...</p> : null}
         {company.logo_url ? (
-          <p className="text-xs text-neutral-500">Preview URL: {company.logo_url}</p>
+          <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={company.logo_url}
+              alt={`${company.name} logo preview`}
+              className="max-h-32 max-w-full object-contain"
+            />
+          </div>
         ) : null}
         {status ? <p className="text-sm text-neutral-600">{status}</p> : null}
         <button
-          className="button bg-[var(--accent)] text-white"
+          className="button w-full bg-[var(--accent)] text-white sm:w-auto sm:justify-self-start"
           type="submit"
           disabled={saving}
         >
