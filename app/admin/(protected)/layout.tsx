@@ -9,9 +9,9 @@ export default async function AdminLayout({
   await requireAdminSession();
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="admin-shell min-h-screen bg-[var(--background)]">
       <AdminNav />
-      <div className="container py-10">{children}</div>
+      <main className="container py-12 sm:py-16">{children}</main>
     </div>
   );
 }

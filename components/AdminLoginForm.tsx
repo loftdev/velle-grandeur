@@ -43,9 +43,12 @@ export default function AdminLoginForm() {
       <label className="grid gap-2 text-sm font-medium">
         Email
         <input
+          id="admin-email"
+          name="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           type="email"
+          autoComplete="email"
           required
           className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
         />
@@ -53,9 +56,12 @@ export default function AdminLoginForm() {
       <label className="grid gap-2 text-sm font-medium">
         Password
         <input
+          id="admin-password"
+          name="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           type="password"
+          autoComplete="current-password"
           required
           className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
         />

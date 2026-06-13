@@ -31,6 +31,16 @@ June 13, 2026:
 - The Contact page map loaded at `8.611484, 124.894067`.
 - Lint, production build, and `git diff --check` passed.
 
+The redesigned admin UI was verified on June 14, 2026:
+
+- The test account authenticated and opened the protected `/admin` dashboard.
+- Its Supabase Auth UUID was confirmed in `admin_users`.
+- Dashboard navigation and active-route styling rendered correctly on desktop.
+- The mobile navbar overflow was removed with a responsive two-row layout.
+- Admin forms and management rows use responsive grids and stacked actions.
+- Login and company form development-indicator accessibility issues were fixed.
+- Lint, production build, and `git diff --check` passed.
+
 ## Current Known Limitations
 
 - Public inquiry API currently does not send email notifications.

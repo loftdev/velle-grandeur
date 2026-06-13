@@ -53,50 +53,58 @@ export default function InquiryDetailPage({
   };
 
   if (!inquiry) {
-    return <p>Loading inquiry...</p>;
+    return <p className="text-neutral-600">Loading inquiry...</p>;
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Inquiry</h1>
-        <p className="mt-2 text-neutral-600">
+    <div className="space-y-10">
+      <div className="max-w-3xl">
+        <p className="badge inline-block bg-[var(--accent-soft)] text-[var(--accent)]">
+          Client inquiry
+        </p>
+        <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">Inquiry</h1>
+        <p className="mt-3 text-lg leading-8 text-neutral-600">
           Submitted on {new Date(inquiry.created_at).toLocaleString()}.
         </p>
       </div>
 
-      <div className="card space-y-4 p-6">
-        <div>
+      <div className="card grid max-w-3xl gap-7 p-6 sm:p-8">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
           <p className="text-xs uppercase tracking-widest text-neutral-500">
             Name
           </p>
-          <p className="text-lg font-semibold">{inquiry.name}</p>
-        </div>
-        <div>
+          <p className="mt-2 text-lg font-semibold">{inquiry.name}</p>
+          </div>
+          <div>
           <p className="text-xs uppercase tracking-widest text-neutral-500">
             Contact
           </p>
-          <p className="text-sm text-neutral-700">
+          <p className="mt-2 break-words text-sm text-neutral-700">
             {inquiry.email ?? "No email provided"}
           </p>
           <p className="text-sm text-neutral-700">
             {inquiry.phone ?? "No phone provided"}
           </p>
+          </div>
         </div>
-        <div>
+        <div className="border-t border-[var(--line)] pt-6">
           <p className="text-xs uppercase tracking-widest text-neutral-500">
             Message
           </p>
-          <p className="text-neutral-700">{inquiry.message}</p>
+          <p className="mt-2 whitespace-pre-wrap leading-7 text-neutral-700">
+            {inquiry.message}
+          </p>
         </div>
         <label className="grid gap-2 text-sm font-medium">
           Status
           <select
+            name="status"
             value={inquiry.status}
             onChange={(event) =>
               setInquiry({ ...inquiry, status: event.target.value })
             }
-            className="rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+            className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
           >
             <option value="new">New</option>
             <option value="contacted">Contacted</option>
@@ -105,7 +113,7 @@ export default function InquiryDetailPage({
         </label>
         {status ? <p className="text-sm text-neutral-600">{status}</p> : null}
         <button
-          className="button bg-[var(--accent)] text-white"
+          className="button w-full bg-[var(--accent)] text-white sm:w-auto sm:justify-self-start"
           type="button"
           onClick={handleSave}
           disabled={saving}

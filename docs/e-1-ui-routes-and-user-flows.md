@@ -27,23 +27,31 @@
 
 ## Admin Routes
 
+- Shared admin shell
+  - Uses the public site's typography, color palette, cards, and pill buttons
+  - Sticky branded navigation with active-route indicators
+  - Navigation wraps into a mobile-safe two-row layout
+  - Forms, management rows, and actions collapse responsively on small screens
 - `/admin/login`
   - Email/password sign-in
   - Development builds display the configured test-account note
+  - Inputs include browser autocomplete and accessible field attributes
 - `/admin`
-  - Dashboard summary
+  - Responsive dashboard summary cards for published listings and new inquiries
+  - Quick links to listings, inquiries, and company settings
 - `/admin/company`
-  - Company profile form
+  - Grouped company identity, location, and branding sections
   - Logo upload to storage
   - Office address, latitude, longitude, and business-hours fields
 - `/admin/listings`
-  - Create listing
-  - Filter listing list
+  - Responsive create-listing form
+  - Category and status filters
+  - Mobile-safe listing management rows
 - `/admin/listings/[id]`
   - Edit listing details
   - Upload/remove listing images
 - `/admin/inquiries`
-  - Inquiry list
+  - Responsive inquiry list and empty state
 - `/admin/inquiries/[id]`
   - Inquiry details
   - Status update
@@ -63,3 +71,10 @@
 2. Admin creates listing in draft/published/sold.
 3. Admin uploads listing images.
 4. Admin edits listing and saves updates.
+
+### Admin Authorization Flow
+
+1. User signs in through Supabase Auth.
+2. The protected admin layout verifies the authenticated session.
+3. The user's Auth UUID must have a matching `admin_users.user_id` row.
+4. Authorized users enter `/admin`; other users return to `/admin/login`.
