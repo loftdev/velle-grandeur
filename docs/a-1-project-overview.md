@@ -5,6 +5,7 @@
 VelleGrandeur is a single-client real estate platform for the Philippines.
 
 It provides:
+
 - A public website for browsing listings and sending inquiries.
 - A protected admin dashboard to manage company profile, listings, and inquiries.
 
@@ -29,14 +30,17 @@ It provides:
 ## Scope Boundary (Current)
 
 Included:
+
 - Single-client deployment
 - SEO-friendly listing detail URL
 - Supabase storage for logo and listing images
 
 Not included:
+
 - Multi-tenant platform features
 - Email notification workflows
 - Marketplace-style advanced search/ranking
 
 Future direction:
+
 - Multi-tenant roadmap is documented in `docs/a-4-multi-tenant-roadmap.md`

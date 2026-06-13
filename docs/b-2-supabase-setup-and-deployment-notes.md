@@ -12,6 +12,7 @@
 ## Storage Buckets
 
 Expected buckets:
+
 - `listing-images` (public)
 - `company-assets` (public)
 

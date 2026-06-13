@@ -12,22 +12,27 @@
 ## Tables
 
 ### `company`
+
 - Single-row pattern with `singleton_key` unique
 - Stores company profile and logo path
 
 ### `admin_users`
+
 - Maps Supabase auth user IDs to admin access
 
 ### `listings`
+
 - Core property records
 - Uses `price_cents` integer
 - Unique key on `(company_id, slug)`
 
 ### `listing_images`
+
 - Image metadata per listing
 - References storage object paths
 
 ### `inquiries`
+
 - Lead submissions from public listing pages
 - Stores `ip_hash` and `user_agent`
 
