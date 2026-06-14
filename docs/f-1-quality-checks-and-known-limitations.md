@@ -41,11 +41,33 @@ The redesigned admin UI was verified on June 14, 2026:
 - Login and company form development-indicator accessibility issues were fixed.
 - Lint, production build, and `git diff --check` passed.
 
+The listing workflow was verified on June 14, 2026:
+
+- Draft-first creation uploaded an image before applying Published status.
+- Category and Status controls align consistently in the desktop create and
+  edit forms while remaining stacked on mobile.
+- Images selected during creation can be removed or reordered by drag-and-drop
+  and accessible left/right controls before submission.
+- Additional image upload persisted immediately on the listing edit page.
+- Existing listing images can be reordered by drag-and-drop or move controls.
+  Saving the listing persisted the new cover and gallery order after reload.
+- Manage Listings inventory rows display up to five thumbnails at once and
+  support one-image scrolling when additional images are available.
+- Published listings appeared publicly; Sold listings were removed from public
+  results.
+- Listing cards loaded two images and supported next/previous navigation,
+  horizontal scrolling, and active-image indicators.
+- Image removal updated metadata and deleted the Storage object.
+- Deleting the temporary test listing removed its remaining Storage object.
+- Create and Manage listing layouts were checked at desktop and mobile
+  viewports without horizontal overflow.
+- The browser console reported no errors or warnings.
+- Lint, TypeScript checking, production build, and `git diff --check` passed.
+
 ## Current Known Limitations
 
 - Public inquiry API currently does not send email notifications.
 - Public listing detail uses server redirect to canonical slug based on latest listing slug.
-- Listing/logo upload and metadata save are separate actions in admin forms.
 - The Next.js development-tools button is visible during `next dev`; it is not
   included in production builds.
 

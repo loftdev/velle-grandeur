@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "../../../../lib/supabase/client";
+
+const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024;
+const logoExtensions: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 
 type Company = {
   id: string;
@@ -17,7 +25,14 @@ type Company = {
   business_hours: string | null;
 };
 
+type ApiError = {
+  error?: {
+    message?: string;
+  };
+};
+
 export default function CompanyPage() {
+  const router = useRouter();
   const [company, setCompany] = useState<Company | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -40,8 +55,7 @@ export default function CompanyPage() {
       | "email"
       | "address"
       | "about"
-      | "business_hours"
-      | "logo_path",
+      | "business_hours",
     value: string,
   ) => {
     if (!company) return;
@@ -59,6 +73,37 @@ export default function CompanyPage() {
     });
   };
 
+  const saveCompany = async (nextCompany: Company) => {
+    const res = await fetch("/api/admin/company", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: nextCompany.name,
+        phone: nextCompany.phone || null,
+        email: nextCompany.email || null,
+        address: nextCompany.address || null,
+        about: nextCompany.about || null,
+        latitude: nextCompany.latitude,
+        longitude: nextCompany.longitude,
+        business_hours: nextCompany.business_hours || null,
+        logo_path: nextCompany.logo_path || null,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as ApiError | null;
+      return {
+        data: null,
+        error: body?.error?.message ?? "Unable to save company settings.",
+      };
+    }
+
+    return {
+      data: (await res.json()) as Company,
+      error: null,
+    };
+  };
+
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!company) return;
@@ -66,40 +111,40 @@ export default function CompanyPage() {
     setSaving(true);
     setStatus(null);
 
-    const res = await fetch("/api/admin/company", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: company.name,
-        phone: company.phone || null,
-        email: company.email || null,
-        address: company.address || null,
-        about: company.about || null,
-        latitude: company.latitude,
-        longitude: company.longitude,
-        business_hours: company.business_hours || null,
-        logo_path: company.logo_path || null,
-      }),
-    });
+    const result = await saveCompany(company);
 
-    if (res.ok) {
-      const data = (await res.json()) as Company;
-      setCompany(data);
+    if (result.data) {
+      setCompany(result.data);
       setStatus("Saved successfully.");
+      router.refresh();
     } else {
-      setStatus("Unable to save company settings.");
+      setStatus(result.error);
     }
 
     setSaving(false);
   };
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file || !company) return;
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl) {
-      setStatus("Missing NEXT_PUBLIC_SUPABASE_URL.");
+    const extension = logoExtensions[file.type];
+    if (!extension) {
+      setStatus("Choose a PNG, JPEG, or WebP image.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_LOGO_SIZE_BYTES) {
+      setStatus("Logo images must be 2 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    if (!company.id) {
+      setStatus("Save the company profile before uploading a logo.");
       event.target.value = "";
       return;
     }
@@ -107,14 +152,16 @@ export default function CompanyPage() {
     setUploading(true);
     setStatus(null);
 
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const companyId = company.id || "singleton";
-    const path = `company/${companyId}/logo/${crypto.randomUUID()}.${ext}`;
+    const path = `company/${company.id}/logo/${crypto.randomUUID()}.${extension}`;
     const supabase = createSupabaseBrowserClient();
 
     const upload = await supabase.storage
       .from("company-assets")
-      .upload(path, file, { upsert: false });
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type,
+        upsert: false,
+      });
 
     if (upload.error) {
       setStatus(upload.error.message);
@@ -123,14 +170,73 @@ export default function CompanyPage() {
       return;
     }
 
-    setCompany({
+    const previousLogoPath = company.logo_path;
+    const result = await saveCompany({
       ...company,
       logo_path: path,
-      logo_url: `${supabaseUrl}/storage/v1/object/public/company-assets/${path}`,
     });
-    setStatus("Logo uploaded. Save changes to persist.");
+
+    if (!result.data) {
+      await supabase.storage.from("company-assets").remove([path]);
+      setStatus(`${result.error} The uploaded file was removed.`);
+      setUploading(false);
+      event.target.value = "";
+      return;
+    }
+
+    setCompany(result.data);
+    router.refresh();
+
+    if (previousLogoPath && previousLogoPath !== path) {
+      const removal = await supabase.storage
+        .from("company-assets")
+        .remove([previousLogoPath]);
+
+      setStatus(
+        removal.error
+          ? "Logo saved, but the previous file could not be removed."
+          : "Logo uploaded and saved.",
+      );
+    } else {
+      setStatus("Logo uploaded and saved.");
+    }
+
     setUploading(false);
     event.target.value = "";
+  };
+
+  const handleLogoRemove = async () => {
+    if (!company?.logo_path) return;
+
+    setUploading(true);
+    setStatus(null);
+
+    const previousLogoPath = company.logo_path;
+    const result = await saveCompany({
+      ...company,
+      logo_path: null,
+    });
+
+    if (!result.data) {
+      setStatus(result.error);
+      setUploading(false);
+      return;
+    }
+
+    setCompany(result.data);
+    router.refresh();
+
+    const supabase = createSupabaseBrowserClient();
+    const removal = await supabase.storage
+      .from("company-assets")
+      .remove([previousLogoPath]);
+
+    setStatus(
+      removal.error
+        ? "Logo was removed from the company profile, but the stored file could not be deleted."
+        : "Logo removed.",
+    );
+    setUploading(false);
   };
 
   if (!company) {
@@ -260,7 +366,7 @@ export default function CompanyPage() {
           </label>
           </div>
           <p className="-mt-2 text-xs text-neutral-500">
-          Coordinates position the office map on the public Contact page.
+            Coordinates position the office map on the public Contact page.
           </p>
           <label className="grid gap-2 text-sm font-medium">
             Business hours
@@ -271,7 +377,9 @@ export default function CompanyPage() {
                 updateField("business_hours", event.target.value)
               }
               rows={3}
-              placeholder={"Monday-Friday, 9:00 AM-5:00 PM\nViewings by appointment"}
+              placeholder={
+                "Monday-Friday, 9:00 AM-5:00 PM\nViewings by appointment"
+              }
               className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
@@ -285,28 +393,34 @@ export default function CompanyPage() {
             <h2 className="mt-2 text-2xl font-semibold">Company logo</h2>
           </div>
           <label className="grid gap-2 text-sm font-medium">
-            Logo path (bucket: company-assets)
-            <input
-              name="logo_path"
-              value={company.logo_path ?? ""}
-              onChange={(event) => updateField("logo_path", event.target.value)}
-              placeholder="company/<company_id>/logo/<uuid>.jpg"
-              className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-medium">
-            Upload logo
+            {company.logo_url ? "Replace logo" : "Upload logo"}
             <input
               name="logo"
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp"
               onChange={handleLogoUpload}
-              disabled={uploading}
+              disabled={uploading || saving}
               className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
+          <p className="-mt-3 text-xs text-neutral-500">
+            PNG, JPEG, or WebP. Maximum file size: 2 MB. Use a square image with
+            a transparent or simple background for the clearest navigation logo.
+          </p>
+          {company.logo_path ? (
+            <button
+              type="button"
+              onClick={handleLogoRemove}
+              disabled={uploading || saving}
+              className="justify-self-start text-sm font-semibold text-red-700 underline"
+            >
+              Remove logo
+            </button>
+          ) : null}
         </section>
-        {uploading ? <p className="text-xs text-neutral-500">Uploading logo...</p> : null}
+        {uploading ? (
+          <p className="text-xs text-neutral-500">Uploading logo...</p>
+        ) : null}
         {company.logo_url ? (
           <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white p-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -317,11 +431,19 @@ export default function CompanyPage() {
             />
           </div>
         ) : null}
-        {status ? <p className="text-sm text-neutral-600">{status}</p> : null}
+        {status ? (
+          <p
+            className="text-sm text-neutral-600"
+            role="status"
+            aria-live="polite"
+          >
+            {status}
+          </p>
+        ) : null}
         <button
           className="button w-full bg-[var(--accent)] text-white sm:w-auto sm:justify-self-start"
           type="submit"
-          disabled={saving}
+          disabled={saving || uploading}
         >
           {saving ? "Saving..." : "Save changes"}
         </button>

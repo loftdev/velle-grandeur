@@ -34,6 +34,10 @@ Query params:
 
 Creates listing and optional image metadata rows.
 
+Returns the new `id` and `company_id`. The admin UI creates the database row as
+a draft, uploads selected images, attaches their metadata, and then applies the
+requested final status.
+
 ### `GET /listings/:id`
 
 Returns single listing with image metadata.
@@ -46,10 +50,12 @@ Notes:
 
 - Slug regenerates if title changes.
 - `published_at` is managed based on status changes.
+- A listing accepts up to 10 image metadata rows.
 
 ### `DELETE /listings/:id`
 
-Deletes listing and linked `listing_images`.
+Deletes the listing, cascades linked `listing_images`, and removes the
+corresponding Storage objects after the database deletion succeeds.
 
 Returns `409 CONFLICT` if listing is referenced by inquiries.
 

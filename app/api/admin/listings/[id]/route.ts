@@ -4,7 +4,11 @@ import { jsonError, jsonOk } from "../../../../../lib/api/errors";
 import { requireAdmin } from "../../../../../lib/api/guards";
 import { generateUniqueListingSlug } from "../../../../../lib/api/listingSlug";
 import { mapListingForApi, type ListingRow } from "../../../../../lib/api/listings";
-import { listingCategories, listingStatuses } from "../../../../../lib/api/constants";
+import {
+  listingCategories,
+  listingStatuses,
+  MAX_LISTING_IMAGES,
+} from "../../../../../lib/api/constants";
 
 const listingSelect =
   "id, company_id, slug, category, status, title, description, price_cents, province, city, contact_phone, published_at, created_at, updated_at, listing_images(id, storage_path, sort_order)";
@@ -25,6 +29,7 @@ const patchSchema = z.object({
         sort_order: z.number().int().nonnegative(),
       }),
     )
+    .max(MAX_LISTING_IMAGES)
     .optional(),
 });
 
@@ -160,7 +165,7 @@ export async function DELETE(
 
   const { data: existing, error: existingError } = await supabase
     .from("listings")
-    .select("id")
+    .select("id, listing_images(storage_path)")
     .eq("id", id)
     .maybeSingle();
 
@@ -170,11 +175,6 @@ export async function DELETE(
 
   if (!existing) {
     return jsonError("NOT_FOUND", "Listing not found.", 404);
-  }
-
-  const deleteImages = await supabase.from("listing_images").delete().eq("listing_id", id);
-  if (deleteImages.error) {
-    return jsonError("SERVER_ERROR", "Unable to delete listing images.", 500);
   }
 
   const removeListing = await supabase.from("listings").delete().eq("id", id);
@@ -189,5 +189,26 @@ export async function DELETE(
     return jsonError("SERVER_ERROR", "Unable to delete listing.", 500);
   }
 
-  return jsonOk({ id });
+  const storagePaths = (
+    existing.listing_images as { storage_path: string }[] | null
+  )?.map((image) => image.storage_path);
+
+  if (storagePaths?.length) {
+    const storageRemoval = await supabase.storage
+      .from("listing-images")
+      .remove(storagePaths);
+
+    if (storageRemoval.error) {
+      console.error(
+        "Listing deleted, but stored images could not be removed.",
+        storageRemoval.error,
+      );
+      return jsonOk({
+        id,
+        cleanup_warning: "Stored listing images could not be removed.",
+      });
+    }
+  }
+
+  return jsonOk({ id, cleanup_warning: null });
 }

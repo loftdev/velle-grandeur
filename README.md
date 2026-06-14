@@ -38,9 +38,11 @@ pnpm dev
 ## Supabase setup
 
 1. Create a Supabase project.
-2. Run SQL migration in Supabase SQL Editor:
+2. Run SQL migrations in timestamp order in the Supabase SQL Editor:
 
 - `supabase/migrations/20260301230000_v1_schema.sql`
+- `supabase/migrations/20260613193000_company_location_fields.sql`
+- `supabase/migrations/20260614090000_storage_upload_limits.sql`
 
 3. Seed initial company row:
 

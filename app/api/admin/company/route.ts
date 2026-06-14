@@ -19,6 +19,23 @@ const schema = z.object({
 
 const companySelect =
   "id, name, logo_path, phone, email, address, about, latitude, longitude, business_hours";
+const legacyCompanySelect =
+  "id, name, logo_path, phone, email, address, about";
+
+function isMissingLocationColumn(error: {
+  code?: string;
+  message?: string;
+} | null) {
+  if (!error) return false;
+  if (error.code === "42703") return true;
+
+  return (
+    error.code === "PGRST204" &&
+    ["latitude", "longitude", "business_hours"].some((column) =>
+      error.message?.includes(column),
+    )
+  );
+}
 
 function urlToStoragePath(url: string) {
   const marker = "/storage/v1/object/public/company-assets/";
@@ -116,6 +133,18 @@ export async function PATCH(request: Request) {
     business_hours: result.data.business_hours ?? null,
     logo_path: result.data.logo_path ?? logoPathFromUrl ?? null,
   };
+  const legacyPayload = {
+    name: payload.name,
+    phone: payload.phone,
+    email: payload.email,
+    address: payload.address,
+    about: payload.about,
+    logo_path: payload.logo_path,
+  };
+  const requiresLocationMigration =
+    payload.latitude !== null ||
+    payload.longitude !== null ||
+    payload.business_hours !== null;
 
   const { data: existing, error: existingError } = await supabase
     .from("company")
@@ -123,31 +152,67 @@ export async function PATCH(request: Request) {
     .maybeSingle();
 
   if (existingError) {
+    console.error("Unable to load company before save.", existingError);
     return jsonError("SERVER_ERROR", "Unable to load company.", 500);
   }
 
   if (!existing) {
-    const insert = await supabase
+    let insert = await supabase
       .from("company")
       .insert(payload)
       .select(companySelect)
       .single();
 
+    if (isMissingLocationColumn(insert.error)) {
+      if (requiresLocationMigration) {
+        return jsonError(
+          "MIGRATION_REQUIRED",
+          "Apply the company location migration before saving coordinates or business hours.",
+          503,
+        );
+      }
+
+      insert = await supabase
+        .from("company")
+        .insert(legacyPayload)
+        .select(legacyCompanySelect)
+        .single();
+    }
+
     if (insert.error) {
+      console.error("Unable to insert company.", insert.error);
       return jsonError("SERVER_ERROR", "Unable to save company.", 500);
     }
 
     return jsonOk(mapCompany(insert.data));
   }
 
-  const update = await supabase
+  let update = await supabase
     .from("company")
     .update(payload)
     .eq("id", existing.id)
     .select(companySelect)
     .single();
 
+  if (isMissingLocationColumn(update.error)) {
+    if (requiresLocationMigration) {
+      return jsonError(
+        "MIGRATION_REQUIRED",
+        "Apply the company location migration before saving coordinates or business hours.",
+        503,
+      );
+    }
+
+    update = await supabase
+      .from("company")
+      .update(legacyPayload)
+      .eq("id", existing.id)
+      .select(legacyCompanySelect)
+      .single();
+  }
+
   if (update.error) {
+    console.error("Unable to update company.", update.error);
     return jsonError("SERVER_ERROR", "Unable to save company.", 500);
   }
 
