@@ -1,4 +1,9 @@
 import Link from "next/link";
+import ListingImageCarousel from "./ListingImageCarousel";
+import {
+  listingCategoryLabels,
+  type ListingCategory,
+} from "../lib/api/constants";
 
 export type ListingSummary = {
   id: string;
@@ -16,35 +21,27 @@ function formatPrice(priceCents: number) {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(price);
 }
 
 export default function ListingCard({ listing }: { listing: ListingSummary }) {
-  const image = listing.images?.[0]?.image_url;
+  const href = `/listings/${listing.slug}-${listing.id}`;
+  const categoryLabel =
+    listingCategoryLabels[listing.category as ListingCategory] ??
+    listing.category.replace(/_/g, " ");
 
   return (
-    <Link
-      href={`/listings/${listing.slug}-${listing.id}`}
-      className="group card overflow-hidden transition-shadow"
-    >
-      <div className="h-48 w-full bg-[var(--accent-soft)]">
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={image}
-            alt={listing.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-            No image available
-          </div>
-        )}
-      </div>
-      <div className="p-5">
+    <article className="card overflow-hidden transition-shadow">
+      <ListingImageCarousel
+        images={listing.images ?? []}
+        listingHref={href}
+        title={listing.title}
+      />
+      <Link href={href} className="block p-5 hover:bg-white/45">
         <div className="badge bg-[var(--accent-soft)] text-[var(--accent)]">
-          {listing.category.replace(/_/g, " ")}
+          {categoryLabel}
         </div>
         <h3 className="mt-3 text-lg font-semibold">{listing.title}</h3>
         <p className="text-sm text-neutral-600">
@@ -54,7 +51,7 @@ export default function ListingCard({ listing }: { listing: ListingSummary }) {
         <p className="mt-3 text-base font-semibold text-[var(--accent)]">
           {formatPrice(listing.price_cents)}
         </p>
-      </div>
-    </Link>
+      </Link>
+    </article>
   );
 }

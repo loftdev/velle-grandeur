@@ -4,6 +4,10 @@ import type { ListingSummary } from "../components/ListingCard";
 import ListingPlaceholder from "../components/ListingPlaceholder";
 import PublicFooter from "../components/PublicFooter";
 import PublicNav from "../components/PublicNav";
+import {
+  listingCategories,
+  listingCategoryLabels,
+} from "../lib/api/constants";
 import { getPublicCompany } from "../lib/api/company";
 import { getBaseUrl } from "../lib/api/url";
 
@@ -41,14 +45,6 @@ export default async function Home({
 
   const items = listings?.items ?? [];
   const hasFilters = Boolean(params.category || params.province || params.city);
-  const categories = [
-    "apartment",
-    "commercial_space",
-    "condo",
-    "house_and_lot",
-    "lot",
-  ];
-
   return (
     <div>
       <PublicNav />
@@ -161,7 +157,7 @@ export default async function Home({
             {items.length === 0 ? (
               <ListingPlaceholder filtered={hasFilters} />
             ) : (
-              categories.map((category) => {
+              listingCategories.map((category) => {
                 const categoryItems = items.filter(
                   (listing) => listing.category === category,
                 );
@@ -170,7 +166,7 @@ export default async function Home({
                   <div key={category} className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-semibold">
-                        {category.replace(/_/g, " ")}
+                        {listingCategoryLabels[category]}
                       </h2>
                       <span className="text-sm text-neutral-500">
                         {categoryItems.length} available

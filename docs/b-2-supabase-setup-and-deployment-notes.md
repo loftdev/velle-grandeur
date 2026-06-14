@@ -6,6 +6,7 @@
 2. Run migration SQL in timestamp order:
    - `supabase/migrations/20260301230000_v1_schema.sql`
    - `supabase/migrations/20260613193000_company_location_fields.sql`
+   - `supabase/migrations/20260614090000_storage_upload_limits.sql`
 3. Run seed SQL:
    - `supabase/seed.sql`
 4. Insert at least one admin user in `admin_users`.
@@ -23,6 +24,11 @@ Expected buckets:
 
 - `listing-images` (public)
 - `company-assets` (public)
+
+Upload limits:
+
+- Listing images: PNG, JPEG, or WebP; maximum 5 MB per image
+- Company logos: PNG, JPEG, or WebP; maximum 2 MB
 
 ## Deployment Notes
 

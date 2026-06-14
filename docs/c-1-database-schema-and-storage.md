@@ -36,6 +36,7 @@
 
 - Image metadata per listing
 - References storage object paths
+- Up to 10 image metadata rows are accepted by the admin API per listing
 
 ### `inquiries`
 
@@ -56,3 +57,6 @@
   - `company/{company_id}/listing/{listing_id}/{uuid}.{ext}`
 - Company logo:
   - `company/{company_id}/logo/{uuid}.{ext}`
+
+Storage buckets restrict uploads to PNG, JPEG, and WebP. Listing images are
+limited to 5 MB per file; company logos are limited to 2 MB.

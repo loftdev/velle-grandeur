@@ -1,15 +1,27 @@
 "use client";
 
 import { use, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  listingCategories,
+  listingCategoryLabels,
+  listingStatuses,
+  listingStatusLabels,
+  MAX_LISTING_IMAGES,
+  MAX_LISTING_IMAGE_SIZE_BYTES,
+} from "../../../../../lib/api/constants";
 import { createSupabaseBrowserClient } from "../../../../../lib/supabase/client";
 
-const categories = [
-  "apartment",
-  "commercial_space",
-  "condo",
-  "house_and_lot",
-  "lot",
-] as const;
+const imageExtensions: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+type ApiError = {
+  error?: {
+    message?: string;
+  };
+};
 
 type ListingImage = {
   id: string;
@@ -33,12 +45,7 @@ type Listing = {
 };
 
 function formatPrice(cents: number) {
-  return (cents / 100).toFixed(0);
-}
-
-function getFileExtension(file: File) {
-  const parts = file.name.split(".");
-  return parts.length > 1 ? parts[parts.length - 1] : "jpg";
+  return (cents / 100).toFixed(2);
 }
 
 export default function ListingDetailPage({
@@ -51,17 +58,21 @@ export default function ListingDetailPage({
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [removingPath, setRemovingPath] = useState<string | null>(null);
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(
+    null,
+  );
+  const [imageOrderChanged, setImageOrderChanged] = useState(false);
 
   const loadListing = useCallback(async () => {
     const res = await fetch(`/api/admin/listings/${id}`);
     if (!res.ok) return;
     const data = (await res.json()) as Listing;
     setListing(data);
+    setImageOrderChanged(false);
   }, [id]);
 
   useEffect(() => {
-    // Load listing once route param is available.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadListing();
   }, [loadListing]);
 
@@ -81,12 +92,33 @@ export default function ListingDetailPage({
     setListing({ ...listing, price_cents: cents });
   };
 
-  const handleSave = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!listing) return;
+  const moveImage = (fromIndex: number, toIndex: number) => {
+    if (
+      !listing ||
+      fromIndex === toIndex ||
+      toIndex < 0 ||
+      toIndex >= images.length
+    ) {
+      return;
+    }
 
-    setSaving(true);
-    setStatus(null);
+    const reorderedImages = [...images];
+    const [movedImage] = reorderedImages.splice(fromIndex, 1);
+    reorderedImages.splice(toIndex, 0, movedImage);
+
+    setListing({
+      ...listing,
+      images: reorderedImages.map((image, index) => ({
+        ...image,
+        sort_order: index,
+      })),
+    });
+    setImageOrderChanged(true);
+    setStatus("Image order changed. Save listing to apply it.");
+  };
+
+  const saveListing = async (nextImages: ListingImage[]) => {
+    if (!listing) return;
 
     const res = await fetch(`/api/admin/listings/${listing.id}`, {
       method: "PATCH",
@@ -100,78 +132,162 @@ export default function ListingDetailPage({
         province: listing.province,
         city: listing.city || null,
         contact_phone: listing.contact_phone || null,
-        images: images.map((image, index) => ({
+        images: nextImages.map((image, index) => ({
           storage_path: image.storage_path,
           sort_order: index,
         })),
       }),
     });
 
-    if (res.ok) {
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as ApiError | null;
+      return {
+        data: null,
+        error: body?.error?.message ?? "Unable to update listing.",
+      };
+    }
+
+    return {
+      data: (await res.json()) as Listing,
+      error: null,
+    };
+  };
+
+  const handleSave = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!listing) return;
+
+    setSaving(true);
+    setStatus(null);
+
+    const result = await saveListing(images);
+    if (result?.data) {
+      setListing(result.data);
+      setImageOrderChanged(false);
       setStatus("Listing updated.");
-      await loadListing();
     } else {
-      setStatus("Unable to update listing.");
+      setStatus(result?.error ?? "Unable to update listing.");
     }
 
     setSaving(false);
   };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !listing) return;
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0 || !listing) return;
+
+    if (images.length + files.length > MAX_LISTING_IMAGES) {
+      setStatus(`A listing can have up to ${MAX_LISTING_IMAGES} images.`);
+      return;
+    }
+
+    const invalidType = files.find((file) => !imageExtensions[file.type]);
+    if (invalidType) {
+      setStatus("Choose only PNG, JPEG, or WebP images.");
+      return;
+    }
+
+    const oversized = files.find(
+      (file) => file.size > MAX_LISTING_IMAGE_SIZE_BYTES,
+    );
+    if (oversized) {
+      setStatus("Each listing image must be 5 MB or smaller.");
+      return;
+    }
 
     setUploading(true);
     setStatus(null);
 
     const supabase = createSupabaseBrowserClient();
-    const ext = getFileExtension(file);
-    const path = `company/${listing.company_id}/listing/${listing.id}/${crypto.randomUUID()}.${ext}`;
+    const uploadedPaths: string[] = [];
 
-    const { error } = await supabase.storage
-      .from("listing-images")
-      .upload(path, file, { upsert: false });
+    try {
+      const uploadedImages: ListingImage[] = [];
 
-    if (error) {
-      setStatus(error.message);
-      setUploading(false);
-      event.target.value = "";
-      return;
-    }
+      for (const file of files) {
+        const extension = imageExtensions[file.type];
+        const path = `company/${listing.company_id}/listing/${listing.id}/${crypto.randomUUID()}.${extension}`;
+        const upload = await supabase.storage
+          .from("listing-images")
+          .upload(path, file, {
+            cacheControl: "3600",
+            contentType: file.type,
+            upsert: false,
+          });
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl) {
-      setStatus("Missing NEXT_PUBLIC_SUPABASE_URL.");
-      setUploading(false);
-      event.target.value = "";
-      return;
-    }
+        if (upload.error) throw upload.error;
+        uploadedPaths.push(path);
 
-    const imageUrl = `${supabaseUrl}/storage/v1/object/public/listing-images/${path}`;
+        const { data } = supabase.storage
+          .from("listing-images")
+          .getPublicUrl(path);
 
-    setListing({
-      ...listing,
-      images: [
-        ...images,
-        {
+        uploadedImages.push({
           id: crypto.randomUUID(),
-          image_url: imageUrl,
+          image_url: data.publicUrl,
           storage_path: path,
-          sort_order: images.length,
-        },
-      ],
-    });
+          sort_order: images.length + uploadedImages.length,
+        });
+      }
 
-    event.target.value = "";
-    setUploading(false);
+      const result = await saveListing([...images, ...uploadedImages]);
+      if (!result?.data) {
+        throw new Error(result?.error ?? "Unable to attach listing images.");
+      }
+
+      setListing(result.data);
+      setImageOrderChanged(false);
+      setStatus(
+        files.length === 1
+          ? "Image uploaded and saved."
+          : `${files.length} images uploaded and saved.`,
+      );
+    } catch (error) {
+      if (uploadedPaths.length > 0) {
+        await supabase.storage.from("listing-images").remove(uploadedPaths);
+      }
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Unable to upload listing images.",
+      );
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleRemoveImage = (storagePath: string) => {
+  const handleRemoveImage = async (storagePath: string) => {
     if (!listing) return;
-    setListing({
-      ...listing,
-      images: images.filter((image) => image.storage_path !== storagePath),
-    });
+
+    setRemovingPath(storagePath);
+    setStatus(null);
+
+    const remainingImages = images.filter(
+      (image) => image.storage_path !== storagePath,
+    );
+    const result = await saveListing(remainingImages);
+
+    if (!result?.data) {
+      setStatus(result?.error ?? "Unable to remove listing image.");
+      setRemovingPath(null);
+      return;
+    }
+
+    setListing(result.data);
+    setImageOrderChanged(false);
+
+    const supabase = createSupabaseBrowserClient();
+    const removal = await supabase.storage
+      .from("listing-images")
+      .remove([storagePath]);
+
+    setStatus(
+      removal.error
+        ? "Image was removed from the listing, but the stored file could not be deleted."
+        : "Image removed.",
+    );
+    setRemovingPath(null);
   };
 
   if (!listing) {
@@ -194,7 +310,7 @@ export default function ListingDetailPage({
 
       <form className="card grid gap-7 p-6 sm:p-8" onSubmit={handleSave}>
         <div className="grid gap-5 md:grid-cols-2">
-          <label className="grid gap-2 text-sm font-medium">
+          <label className="grid content-start gap-2 text-sm font-medium">
             Category
             <select
               name="category"
@@ -202,14 +318,14 @@ export default function ListingDetailPage({
               onChange={(event) => updateField("category", event.target.value)}
               className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             >
-              {categories.map((category) => (
+              {listingCategories.map((category) => (
                 <option key={category} value={category}>
-                  {category.replace(/_/g, " ")}
+                  {listingCategoryLabels[category]}
                 </option>
               ))}
             </select>
           </label>
-          <label className="grid gap-2 text-sm font-medium">
+          <label className="grid content-start gap-2 text-sm font-medium">
             Status
             <select
               name="status"
@@ -217,10 +333,16 @@ export default function ListingDetailPage({
               onChange={(event) => updateField("status", event.target.value)}
               className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="sold">Sold</option>
+              {listingStatuses.map((listingStatus) => (
+                <option key={listingStatus} value={listingStatus}>
+                  {listingStatusLabels[listingStatus]}
+                </option>
+              ))}
             </select>
+            <span className="text-xs font-normal text-neutral-500">
+              Draft is private. Published appears publicly. Sold is archived
+              from public results.
+            </span>
           </label>
         </div>
 
@@ -259,6 +381,7 @@ export default function ListingDetailPage({
               required
               type="number"
               min="0"
+              step="0.01"
               className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
             />
           </label>
@@ -303,45 +426,106 @@ export default function ListingDetailPage({
               </p>
               <h2 className="mt-2 text-2xl font-semibold">Property images</h2>
             </div>
-            <label className="button cursor-pointer self-start border border-[var(--line)] bg-white px-4 py-2 text-sm text-[var(--accent)]">
+            <label className="grid gap-2 text-sm font-medium sm:min-w-64">
+              Upload images
               <input
                 name="listing_image"
                 type="file"
-                className="hidden"
-                accept="image/*"
+                className="rounded-xl border border-[var(--line)] bg-white px-4 py-3"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
                 onChange={handleUpload}
-                disabled={uploading}
+                disabled={uploading || saving || removingPath !== null}
               />
-              {uploading ? "Uploading..." : "Upload image"}
             </label>
           </div>
+          <p className="text-xs text-neutral-500">
+            Up to {MAX_LISTING_IMAGES} PNG, JPEG, or WebP images, 5 MB each.
+            Drag images or use the move buttons to change their order. The
+            first image is used as the public card cover.
+          </p>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {images.length === 0 ? (
               <p className="text-sm text-neutral-600">No images uploaded.</p>
             ) : (
-              images.map((image) => (
+              images.map((image, index) => (
                 <div
                   key={image.storage_path}
-                  className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white"
+                  draggable
+                  onDragStart={() => setDraggedImageIndex(index)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => {
+                    if (draggedImageIndex !== null) {
+                      moveImage(draggedImageIndex, index);
+                    }
+                    setDraggedImageIndex(null);
+                  }}
+                  onDragEnd={() => setDraggedImageIndex(null)}
+                  className={`overflow-hidden rounded-2xl border bg-white ${
+                    draggedImageIndex === index
+                      ? "border-[var(--accent)] opacity-60"
+                      : "border-[var(--line)]"
+                  }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={image.image_url}
-                    alt={listing.title}
+                    alt={`${listing.title} image ${index + 1}`}
                     className="h-36 w-full object-cover"
                   />
-                  <button
-                    type="button"
-                    className="w-full py-2 text-xs text-red-600"
-                    onClick={() => handleRemoveImage(image.storage_path)}
-                  >
-                    Remove
-                  </button>
+                  <p className="truncate px-3 py-2 text-xs text-neutral-600">
+                    {index === 0 ? "Cover image" : `Image ${index + 1}`}
+                  </p>
+                  <div className="grid grid-cols-3 border-t border-[var(--line)] text-xs">
+                    <button
+                      type="button"
+                      onClick={() => moveImage(index, index - 1)}
+                      disabled={
+                        index === 0 ||
+                        removingPath !== null ||
+                        uploading ||
+                        saving
+                      }
+                      className="py-2 disabled:text-neutral-300"
+                      aria-label={`Move image ${index + 1} left`}
+                    >
+                      Left
+                    </button>
+                    <button
+                      type="button"
+                      className="border-x border-[var(--line)] py-2 text-red-600 disabled:text-neutral-300"
+                      onClick={() => handleRemoveImage(image.storage_path)}
+                      disabled={removingPath !== null || uploading || saving}
+                    >
+                      {removingPath === image.storage_path
+                        ? "Removing..."
+                        : "Remove"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveImage(index, index + 1)}
+                      disabled={
+                        index === images.length - 1 ||
+                        removingPath !== null ||
+                        uploading ||
+                        saving
+                      }
+                      className="py-2 disabled:text-neutral-300"
+                      aria-label={`Move image ${index + 1} right`}
+                    >
+                      Right
+                    </button>
+                  </div>
                 </div>
               ))
             )}
           </div>
+          {imageOrderChanged ? (
+            <p className="text-xs font-medium text-[var(--accent)]">
+              The image order has unsaved changes.
+            </p>
+          ) : null}
         </section>
 
         {status ? <p className="text-sm text-neutral-600">{status}</p> : null}
@@ -349,7 +533,7 @@ export default function ListingDetailPage({
         <button
           className="button w-full bg-[var(--accent)] text-white sm:w-auto sm:justify-self-start"
           type="submit"
-          disabled={saving}
+          disabled={saving || uploading || removingPath !== null}
         >
           {saving ? "Saving..." : "Save listing"}
         </button>

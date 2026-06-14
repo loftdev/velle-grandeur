@@ -42,6 +42,7 @@ pnpm dev
 
 - `supabase/migrations/20260301230000_v1_schema.sql`
 - `supabase/migrations/20260613193000_company_location_fields.sql`
+- `supabase/migrations/20260614090000_storage_upload_limits.sql`
 
 3. Seed initial company row:
 

@@ -8,6 +8,8 @@
   - Service highlights and published property sections
   - Three non-interactive placeholder cards when no published listings match
   - Filter-aware empty-state messaging
+  - Listing cards support touch/trackpad horizontal image scrolling, previous
+    and next controls, and image position indicators
 - Public navigation
   - Explicit Home, About, Contact, and Admin Login links
   - Company name also links to the home page
@@ -45,11 +47,19 @@
   - Office address, latitude, longitude, and business-hours fields
 - `/admin/listings`
   - Responsive create-listing form
+  - Multi-image selection with previews before creation
+  - Selected images can be removed or reordered by drag-and-drop and accessible
+    left/right controls before creation
+  - Draft-first creation so incomplete uploads are never published
   - Category and status filters
+  - Inventory rows include five-image thumbnail strips with one-image scrolling
   - Mobile-safe listing management rows
 - `/admin/listings/[id]`
   - Edit listing details
-  - Upload/remove listing images
+  - Reorder existing images with drag-and-drop or move buttons; Save listing
+    persists the new cover and gallery order
+  - Upload/remove listing images with immediate metadata persistence and storage
+    cleanup
 - `/admin/inquiries`
   - Responsive inquiry list and empty state
 - `/admin/inquiries/[id]`
@@ -68,9 +78,10 @@
 ### Admin Listing Flow
 
 1. Admin logs in.
-2. Admin creates listing in draft/published/sold.
-3. Admin uploads listing images.
-4. Admin edits listing and saves updates.
+2. Admin enters listing details and selects up to 10 images.
+3. The UI creates a private draft, uploads and attaches the images, then applies
+   the requested draft/published/sold status.
+4. Admin edits listing fields or images; image changes persist immediately.
 
 ### Admin Authorization Flow
 

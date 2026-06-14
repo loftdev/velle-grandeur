@@ -1,5 +1,9 @@
 import PublicFooter from "../../../components/PublicFooter";
 import PublicNav from "../../../components/PublicNav";
+import {
+  listingCategoryLabels,
+  type ListingCategory,
+} from "../../../lib/api/constants";
 import { getBaseUrl } from "../../../lib/api/url";
 import { redirect } from "next/navigation";
 
@@ -52,8 +56,12 @@ export default async function ListingDetailPage({
   const price = new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(listing.price_cents / 100);
+  const categoryLabel =
+    listingCategoryLabels[listing.category as ListingCategory] ??
+    listing.category.replace(/_/g, " ");
 
   const canonical = `${listing.slug}-${listing.id}`;
   if (slugOrId !== canonical) {
@@ -88,7 +96,7 @@ export default async function ListingDetailPage({
             <div className="card p-6">
               <h1 className="text-3xl font-semibold">{listing.title}</h1>
               <p className="mt-2 text-sm uppercase tracking-widest text-neutral-500">
-                {listing.category.replace(/_/g, " ")}
+                {categoryLabel}
               </p>
               <p className="mt-4 text-2xl font-semibold text-[var(--accent)]">
                 {price}

@@ -5,6 +5,7 @@ import { requireAdmin } from "../../../../lib/api/guards";
 import {
   listingCategories,
   listingStatuses,
+  MAX_LISTING_IMAGES,
   MAX_LISTING_LIMIT,
 } from "../../../../lib/api/constants";
 import { generateUniqueListingSlug } from "../../../../lib/api/listingSlug";
@@ -32,6 +33,7 @@ const bodySchema = z.object({
         sort_order: z.number().int().nonnegative(),
       }),
     )
+    .max(MAX_LISTING_IMAGES)
     .optional(),
 });
 
@@ -125,5 +127,11 @@ export async function POST(request: Request) {
     }
   }
 
-  return jsonOk({ id: insertListing.data.id }, 201);
+  return jsonOk(
+    {
+      id: insertListing.data.id,
+      company_id: company.id,
+    },
+    201,
+  );
 }
